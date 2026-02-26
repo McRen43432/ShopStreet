@@ -37,7 +37,7 @@ export default function App() {
   const [news, setNews] = useState<BlogPost[]>([]);
   const [settings, setSettings] = useState<any>({});
 
-  // Инициализация данных при первом запуске
+  // Инициализация авторизации и загрузка данных
   useEffect(() => {
     const savedUsers = localStorage.getItem('streetplayer_users');
     const savedCurrent = localStorage.getItem('streetplayer_current');
@@ -53,7 +53,7 @@ export default function App() {
       setRole(current.role);
     }
     
-    // Запускаем локальную загрузку данных
+    // Запускаем загрузку из облачной базы
     fetchData();
   }, []);
 
@@ -61,30 +61,65 @@ export default function App() {
     window.scrollTo(0, 0);
   }, [view]);
 
-  // АВТОНОМНАЯ ЗАГРУЗКА (БЕЗ API)
+  // --- РАБОТА С ОБЛАЧНОЙ БАЗОЙ (NEON) ---
   const fetchData = async () => {
     try {
-      // Пытаемся взять данные из localStorage
-      const localProducts = localStorage.getItem('sp_products');
-      const localNews = localStorage.getItem('sp_news');
+      // 1. Грузим товары
+      const prodRes = await fetch('/api/products?type=products');
+      if (prodRes.ok) {
+        const prodData = await prodRes.json();
+        // Если в базе есть товары — ставим их, если нет — берем из constants
+        setProducts(prodData.length > 0 ? prodData : PRODUCTS);
+      }
+
+      // 2. Грузим новости
+      const newsRes = await fetch('/api/products?type=news');
+      if (newsRes.ok) {
+        const newsData = await newsRes.json();
+        setNews(newsData.length > 0 ? newsData : BLOG_POSTS);
+      }
+
+      // Настройки пока оставляем в local, так как таблицы под них еще нет
       const localSettings = localStorage.getItem('sp_settings');
+      setSettings(localSettings ? JSON.parse(localSettings) : {});
 
-      // Если в памяти пусто — берем данные из файла constants.ts, иначе из памяти
-      const finalProducts = localProducts ? JSON.parse(localProducts) : PRODUCTS;
-      const finalNews = localNews ? JSON.parse(localNews) : BLOG_POSTS;
-      const finalSettings = localSettings ? JSON.parse(localSettings) : {};
-
-      setProducts(finalProducts);
-      setNews(finalNews);
-      setSettings(finalSettings);
-
-      // Сохраняем начальные данные в память, если их там не было
-      if (!localProducts) localStorage.setItem('sp_products', JSON.stringify(PRODUCTS));
-      if (!localNews) localStorage.setItem('sp_news', JSON.stringify(BLOG_POSTS));
     } catch (err) {
-      console.error('Ошибка локальной загрузки:', err);
+      console.error('Ошибка загрузки из базы Neon:', err);
+      // Фолбэк на локальные данные при ошибке сети
+      setProducts(PRODUCTS);
+      setNews(BLOG_POSTS);
     }
   };
+
+  // УДАЛЕНИЕ ТОВАРА ИЗ ОБЛАКА
+  const deleteProduct = async (id: string | number) => {
+    try {
+      const res = await fetch(`/api/products?type=products&id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
+        return true;
+      }
+    } catch (err) {
+      console.error('Ошибка удаления товара в базе:', err);
+    }
+    return false;
+  };
+
+  // УДАЛЕНИЕ НОВОСТЕЙ ИЗ ОБЛАКА
+  const deleteNews = async (id: string | number) => {
+    try {
+      const res = await fetch(`/api/products?type=news&id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setNews(prev => prev.filter(n => String(n.id) !== String(id)));
+        return true;
+      }
+    } catch (err) {
+      console.error('Ошибка удаления новости в базе:', err);
+    }
+    return false;
+  };
+
+  // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
 
   const handleLogin = (role: string, name: string, email: string) => {
     const user = { email, name, role };
@@ -103,12 +138,8 @@ export default function App() {
     });
     
     localStorage.setItem('streetplayer_current', JSON.stringify(user));
-    
-    if (role === 'admin') {
-      setView('admin');
-    } else {
-      setView('home');
-    }
+    if (role === 'admin') setView('admin');
+    else setView('home');
   };
 
   const handleSwitchUser = (user: {email: string, name: string, role: string}) => {
@@ -116,11 +147,8 @@ export default function App() {
     setIsAuthorized(true);
     setRole(user.role);
     localStorage.setItem('streetplayer_current', JSON.stringify(user));
-    if (user.role === 'admin') {
-      setView('admin');
-    } else {
-      setView('home');
-    }
+    if (user.role === 'admin') setView('admin');
+    else setView('home');
   };
 
   const handleLogout = () => {
@@ -134,32 +162,6 @@ export default function App() {
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
     setView('catalog');
-  };
-
-  // АВТОНОМНОЕ УДАЛЕНИЕ ТОВАРА
-  const deleteProduct = async (id: string | number) => {
-    try {
-      const updatedProducts = products.filter(p => String(p.id) !== String(id));
-      setProducts(updatedProducts);
-      localStorage.setItem('sp_products', JSON.stringify(updatedProducts));
-      return true;
-    } catch (err) {
-      console.error('Ошибка удаления товара:', err);
-      return false;
-    }
-  };
-
-  // АВТОНОМНОЕ УДАЛЕНИЕ НОВОСТЕЙ
-  const deleteNews = async (id: string | number) => {
-    try {
-      const updatedNews = news.filter(n => String(n.id) !== String(id));
-      setNews(updatedNews);
-      localStorage.setItem('sp_news', JSON.stringify(updatedNews));
-      return true;
-    } catch (err) {
-      console.error('Ошибка удаления новости:', err);
-      return false;
-    }
   };
 
   const addToCart = (product: Product) => {
