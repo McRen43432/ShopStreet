@@ -15,12 +15,20 @@ export const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemove }: Car
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   const handleCheckout = () => {
-    const phoneNumber = "87082090312";
+    const phoneNumber = "77082090312";
+    const normalizedPhone = phoneNumber
+      .replace(/\D/g, '')
+      .replace(/^8(\d{10})$/, '7$1');
     const itemsList = items.map(item => `${item.product.name} (x${item.quantity})`).join(', ');
-    const message = `Здравствуйте! Хочу заказать: ${itemsList}. \n\nИтого: ${total} ₸`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    const message = `Здравствуйте! Хочу заказать: ${itemsList}. Итого: ${total} KZT`;
+    const params = new URLSearchParams({
+      phone: normalizedPhone,
+      text: message,
+      type: 'phone_number',
+      app_absent: '0',
+    });
+    const whatsappUrl = `https://api.whatsapp.com/send/?${params.toString()}`;
+    window.location.href = whatsappUrl;
   };
 
   return (

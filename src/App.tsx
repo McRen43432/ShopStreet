@@ -454,7 +454,7 @@ export default function App() {
                 <h4 className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/80">Social</h4>
                 <div className="flex gap-2">
                   <a href="https://www.instagram.com/streetplayer.store" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-neon hover:text-ink transition-all"><Instagram size={16} /></a>
-                  <a href="https://wa.me/87082090312" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all"><MessageCircle size={16} /></a>
+                  <a href="https://wa.me/77082090312" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all"><MessageCircle size={16} /></a>
                 </div>
               </div>
             </div>
