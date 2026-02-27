@@ -13,7 +13,6 @@ import {
   Save,
   Trash2,
   Edit,
-  ClipboardList,
   Store,
   X
 } from 'lucide-react';
@@ -39,7 +38,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   products, 
   news 
 }) => {
-  const [activeTab, setActiveTab] = useState<'products' | 'news' | 'promos' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'news' | 'promos'>('products');
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
   const [editingPromoPrice, setEditingPromoPrice] = useState<{price: string, old_price: string}>({price: '', old_price: ''});
   const [newProduct, setNewProduct] = useState({ 
@@ -250,16 +249,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'products', label: 'Товары', icon: <Package size={18} /> },
     { id: 'news', label: 'Новости', icon: <Newspaper size={18} /> },
     { id: 'promos', label: 'Акции', icon: <Tag size={18} /> },
-    { id: 'orders', label: 'Заказы', icon: <ClipboardList size={18} /> },
   ];
 
   return (
-    <div className="min-h-screen bg-ink flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-ink flex flex-col lg:flex-row overflow-x-hidden">
       {/* Sidebar */}
-      <aside className="w-full lg:w-64 bg-anthracite border-b lg:border-b-0 lg:border-r border-white/5 flex flex-col">
+      <aside className="w-full lg:w-64 bg-anthracite border-b lg:border-b-0 lg:border-r border-white/5 flex flex-col shrink-0">
         <div className="p-6 lg:p-8 border-b border-white/5 flex justify-between items-center lg:block">
-          <div className="text-xl font-black tracking-tighter flex items-center gap-2">
-            <span className="text-neon">ADMIN</span> PANEL
+          <div className="text-lg lg:text-xl font-black tracking-tighter leading-tight max-w-full break-words whitespace-normal">
+            <span className="text-neon">АДМИНИСТРАТОР</span> ПАНЕЛЬ
           </div>
           <button 
             onClick={onLogout}
@@ -304,7 +302,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+      <main className="flex-1 p-6 lg:p-12 overflow-y-auto overflow-x-hidden">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">
@@ -602,6 +600,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-white/10">
+                        <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Фото</th>
                         <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Дата</th>
                         <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Заголовок</th>
                         <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Действия</th>
@@ -610,6 +609,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <tbody className="text-xs font-bold uppercase tracking-tighter">
                       {news.map((item) => (
                         <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="py-4">
+                            {item.image ? (
+                              <img src={item.image} className="w-10 h-10 object-cover" alt="" />
+                            ) : (
+                              <div className="w-10 h-10 bg-white/5 flex items-center justify-center text-[8px] text-white/20">NO IMG</div>
+                            )}
+                          </td>
                           <td className="py-4 text-white/40">{item.date}</td>
                           <td className="py-4">{item.title}</td>
                           <td className="py-4">
@@ -655,6 +661,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-white/10">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white/40">Фото</th>
                       <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white/40">Товар</th>
                       <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white/40">Текущая цена</th>
                       <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white/40">Старая цена</th>
@@ -664,6 +671,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <tbody>
                     {products.map((product) => (
                       <tr key={product.id} className="border-b border-white/10">
+                        <td className="px-4 py-3">
+                          {product.image ? (
+                            <img src={product.image} className="w-10 h-10 object-cover" alt="" />
+                          ) : (
+                            <div className="w-10 h-10 bg-white/5 flex items-center justify-center text-[8px] text-white/20">NO IMG</div>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-sm">{product.name}</td>
                         <td className="px-4 py-3 text-sm">{product.price} ₸</td>
                         <td className="px-4 py-3 text-sm text-yellow-400">{product.old_price ? `${product.old_price} ₸` : 'Нет'}</td>
@@ -738,44 +752,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {activeTab === 'orders' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">ID</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Клиент</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Товар</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Сумма</th>
-                    <th className="py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Статус</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs font-bold uppercase tracking-tighter">
-                  {[
-                    { id: '#8492', client: 'Ринат К.', item: 'Apex Top (M)', price: '5500 ₸', status: 'Оплачено' },
-                    { id: '#8491', client: 'Анна С.', item: 'Kinetic Leggings (S)', price: '6200 ₸', status: 'В обработке' },
-                    { id: '#8490', client: 'Иван П.', item: 'Titan Belt', price: '3800 ₸', status: 'Отправлено' },
-                  ].map((order) => (
-                    <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="py-4 text-white/40">{order.id}</td>
-                      <td className="py-4">{order.client}</td>
-                      <td className="py-4">{order.item}</td>
-                      <td className="py-4">{order.price}</td>
-                      <td className="py-4">
-                        <span className={`px-2 py-1 rounded-[2px] text-[8px] font-black ${
-                          order.status === 'Оплачено' ? 'bg-green-500/20 text-green-500' :
-                          order.status === 'В обработке' ? 'bg-yellow-500/20 text-yellow-500' :
-                          'bg-blue-500/20 text-blue-500'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </main>
     </div>

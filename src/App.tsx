@@ -61,22 +61,21 @@ export default function App() {
     window.scrollTo(0, 0);
   }, [view]);
 
-  // --- РАБОТА С ОБЛАЧНОЙ БАЗОЙ (NEON) ---
+  // --- ЗАГРУЗКА ДАННЫХ С СЕРВЕРА ---
   const fetchData = async () => {
     try {
       // 1. Грузим товары
-      const prodRes = await fetch('/api/products?type=products');
+      const prodRes = await fetch('/api/products');
       if (prodRes.ok) {
         const prodData = await prodRes.json();
-        // Если в базе есть товары — ставим их, если нет — берем из constants
-        setProducts(prodData.length > 0 ? prodData : PRODUCTS);
+        setProducts(prodData);
       }
 
       // 2. Грузим новости
-      const newsRes = await fetch('/api/products?type=news');
+      const newsRes = await fetch('/api/news');
       if (newsRes.ok) {
         const newsData = await newsRes.json();
-        setNews(newsData.length > 0 ? newsData : BLOG_POSTS);
+        setNews(newsData);
       }
 
       // Настройки пока оставляем в local, так как таблицы под них еще нет
@@ -84,17 +83,17 @@ export default function App() {
       setSettings(localSettings ? JSON.parse(localSettings) : {});
 
     } catch (err) {
-      console.error('Ошибка загрузки из базы Neon:', err);
+      console.error('Ошибка загрузки данных с сервера:', err);
       // Фолбэк на локальные данные при ошибке сети
       setProducts(PRODUCTS);
       setNews(BLOG_POSTS);
     }
   };
 
-  // УДАЛЕНИЕ ТОВАРА ИЗ ОБЛАКА
+  // УДАЛЕНИЕ ТОВАРА
   const deleteProduct = async (id: string | number) => {
     try {
-      const res = await fetch(`/api/products?type=products&id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
         return true;
@@ -105,10 +104,10 @@ export default function App() {
     return false;
   };
 
-  // УДАЛЕНИЕ НОВОСТЕЙ ИЗ ОБЛАКА
+  // УДАЛЕНИЕ НОВОСТИ
   const deleteNews = async (id: string | number) => {
     try {
-      const res = await fetch(`/api/products?type=news&id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/news/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setNews(prev => prev.filter(n => String(n.id) !== String(id)));
         return true;
@@ -379,16 +378,22 @@ export default function App() {
         <section className="py-16 md:py-24 px-6">
           <div className="container-fluid">
             <h1 className="heading-hero mb-12">Новости</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {news.map((post) => (
-                <div key={post.id} className="group">
-                  <div className="aspect-video overflow-hidden mb-6 relative">
-                    <img src={post.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt={post.title} />
+                <div key={post.id} className="group border border-white/10 bg-anthracite/30 p-4 md:p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-28 h-20 md:w-36 md:h-24 overflow-hidden bg-anthracite/50 shrink-0">
+                      <img src={post.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt={post.title} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">{post.date}</p>
+                      <h2 className="text-lg md:text-xl font-black uppercase leading-tight mb-3 group-hover:text-neon transition-colors">{post.title}</h2>
+                      <p className="text-white/50 text-xs md:text-sm line-clamp-2 mb-3">{post.excerpt}</p>
+                      <button onClick={() => setSelectedNews(post)} className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-neon">
+                        Читать полностью <ArrowRight size={14} />
+                      </button>
+                    </div>
                   </div>
-                  <h2 className="text-xl md:text-2xl font-black uppercase mb-3 group-hover:text-neon">{post.title}</h2>
-                  <button onClick={() => setSelectedNews(post)} className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-neon">
-                    Читать полностью <ArrowRight size={14} />
-                  </button>
                 </div>
               ))}
             </div>
@@ -422,45 +427,39 @@ export default function App() {
       {view !== 'admin' && (
         <footer className="bg-ink border-t border-white/5 py-12 px-6">
           <div className="container-fluid">
-            <div className="mb-10">
-              <div className="text-2xl font-black tracking-tighter mb-3">
-                <span className="text-neon">STREETPLAYER</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 pb-10 border-b border-white/5">
+              <div>
+                <div className="text-2xl font-black tracking-tighter mb-3">
+                  <span className="text-neon">STREETPLAYER</span>
+                </div>
+                <p className="text-white/50 text-xs max-w-sm">Экипировка для атлетов нового поколения.</p>
               </div>
-              <p className="text-white/50 text-xs max-w-sm mb-4">Экипировка для атлетов нового поколения.</p>
-              <div className="flex gap-2">
-                <a href="https://www.instagram.com/streetplayer.store" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-neon hover:text-ink transition-all"><Instagram size={16} /></a>
-                <a href="https://wa.me/87082090312" target="_blank" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all"><MessageCircle size={16} /></a>
+
+              <div>
+                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/80">Меню</h4>
+                <ul className="space-y-2 text-[10px] font-bold text-white/50 uppercase">
+                  <li><button onClick={() => setView('home')} className="hover:text-neon transition-colors">Home</button></li>
+                  <li><button onClick={() => setView('catalog')} className="hover:text-neon transition-colors">Catalog</button></li>
+                  <li><button onClick={() => setView('discounts')} className="hover:text-neon transition-colors">Discounts</button></li>
+                  <li><button onClick={() => setView('news')} className="hover:text-neon transition-colors">News</button></li>
+                  {isAuthorized && role === 'admin' ? (
+                    <li><button onClick={() => setView('admin')} className="hover:text-neon transition-colors">Admin</button></li>
+                  ) : (
+                    <li><button onClick={() => setView('login')} className="hover:text-neon transition-colors">Login</button></li>
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/80">Social</h4>
+                <div className="flex gap-2">
+                  <a href="https://www.instagram.com/streetplayer.store" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-neon hover:text-ink transition-all"><Instagram size={16} /></a>
+                  <a href="https://wa.me/87082090312" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all"><MessageCircle size={16} /></a>
+                </div>
               </div>
             </div>
 
             <TrustBar />
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10 pb-10 border-b border-white/5">
-              <div>
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/80">Категории</h4>
-                <ul className="space-y-1.5 text-[10px] font-bold text-white/50 uppercase">
-                  <li><button onClick={() => setView('catalog')} className="hover:text-neon">Мужское</button></li>
-                  <li><button onClick={() => setView('catalog')} className="hover:text-neon">Женское</button></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/80">Инфо</h4>
-                <ul className="space-y-1.5 text-[10px] font-bold text-white/50 uppercase">
-                  <li><a href="#" className="hover:text-neon">Доставка</a></li>
-                  <li><a href="#" className="hover:text-neon">Возврат</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/80">Аккаунт</h4>
-                <div className="space-y-1.5 text-[10px] font-bold uppercase">
-                  {isAuthorized ? (
-                    <button onClick={handleLogout} className="text-red-500">Выйти</button>
-                  ) : (
-                    <button onClick={() => setView('login')} className="text-white/50">Вход</button>
-                  )}
-                </div>
-              </div>
-            </div>
 
             <div className="flex justify-between items-center text-[8px] font-bold text-white/20 uppercase tracking-widest">
               <p>© 2026 STREETPLAYER. LABORATORY DIVISION.</p>
